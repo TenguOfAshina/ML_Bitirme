@@ -33,7 +33,7 @@ def load_images_from_folder(folder):
         img = cv2.imread(os.path.join(folder, filename))
         if img is not None:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            img = cv2.resize(img, (224, 224))  # Resize to a fixed size for the model
+            img = cv2.resize(img, (224, 224))
             images.append(img)
     return images
 
@@ -80,13 +80,13 @@ print('mauve_stinger_jellyfish_images: ',len(mauve_stinger_images))
 X = np.array(Moon_images + barrel_images + blue_images + compass_images + lions_mane_images + mauve_stinger_images)
 y = np.array(Moon_labels + barrel_labels + blue_labels + compass_labels + lions_mane_labels + mauve_stinger_labels)
 
-# Normalize pixel values to range [0, 1]
+# normalize pixel values to range [0, 1]
 X = X.astype('float32') / 255.0
 
-# One-hot encode the labels
+# one-hot encode the labels
 y = utils.to_categorical(y, 6)
 
-# Split the data into training and testing sets
+# split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 input_shape_resnet = (224, 224, 3)
@@ -106,16 +106,16 @@ X_train_resized_resnet = resize_images(X_train, input_shape_resnet)
 X_train_resized_densenet = resize_images(X_train, input_shape_densenet)
 X_train_resized_efficientnet = resize_images(X_train, input_shape_efficientnet)
 
-# Load pre-trained ResNet50 model and remove the top classification layer
+# load pre-trained ResNet50 model and remove the top classification layer
 resnet_base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape_resnet)
 resnet_base_model.trainable = False
 
-# Add custom classification head to the ResNet model
+# add custom classification head to the ResNet model
 resnet_global_avg_pooling = GlobalAveragePooling2D()(resnet_base_model.output)
 resnet_output = Dense(6, activation='softmax')(resnet_global_avg_pooling)
 resnet_model = Model(inputs=resnet_base_model.input, outputs=resnet_output)
 
-# Compile the ResNet model
+# compile the ResNet model
 resnet_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
@@ -135,12 +135,6 @@ densenet_model.compile(loss='categorical_crossentropy', optimizer='adam', metric
 early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True)
 lr_scheduler = ReduceLROnPlateau(monitor='val_loss', patience=10, factor=0.5, min_lr=1e-7)
 
-# Train the models
-'''
-train the models on resized training data and validation split,
-monitoring the validation loss and using the
-early stopping and learning rate scheduling callbacks to stop when necessary.
-'''
 
 resnet_history = resnet_model.fit(X_train_resized_resnet, y_train, batch_size=32, epochs=20, validation_split=0.2,callbacks=[early_stopping, lr_scheduler])
 densenet_history = densenet_model.fit(X_train_resized_densenet, y_train, batch_size=32, epochs=20, validation_split=0.2,callbacks=[early_stopping, lr_scheduler])
@@ -148,7 +142,7 @@ densenet_history = densenet_model.fit(X_train_resized_densenet, y_train, batch_s
 X_test_resized_densenet = resize_images(X_test, input_shape_densenet)
 X_test_resized_resnet = resize_images(X_test, input_shape_resnet)
 
-# Evaluate the models on test data
+
 densenet_loss, densenet_accuracy = densenet_model.evaluate(X_test_resized_densenet, y_test)
 resnet_loss, resnet_accuracy = resnet_model.evaluate(X_test_resized_resnet, y_test)
 

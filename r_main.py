@@ -80,13 +80,10 @@ print('mauve_stinger_jellyfish_images: ',len(mauve_stinger_images))
 X = np.array(Moon_images + barrel_images + blue_images + compass_images + lions_mane_images + mauve_stinger_images)
 y = np.array(Moon_labels + barrel_labels + blue_labels + compass_labels + lions_mane_labels + mauve_stinger_labels)
 
-# normalize pixel values to range [0, 1]
 X = X.astype('float32') / 255.0
 
-# one-hot encode the labels
 y = utils.to_categorical(y, 6)
 
-# split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 input_shape_resnet = (224, 224, 3)
@@ -106,16 +103,13 @@ X_train_resized_resnet = resize_images(X_train, input_shape_resnet)
 X_train_resized_densenet = resize_images(X_train, input_shape_densenet)
 X_train_resized_efficientnet = resize_images(X_train, input_shape_efficientnet)
 
-# load pre-trained ResNet50 model and remove the top classification layer
 resnet_base_model = ResNet50(weights='imagenet', include_top=False, input_shape=input_shape_resnet)
 resnet_base_model.trainable = False
 
-# add custom classification head to the ResNet model
 resnet_global_avg_pooling = GlobalAveragePooling2D()(resnet_base_model.output)
 resnet_output = Dense(6, activation='softmax')(resnet_global_avg_pooling)
 resnet_model = Model(inputs=resnet_base_model.input, outputs=resnet_output)
 
-# compile the ResNet model
 resnet_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 
